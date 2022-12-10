@@ -23,7 +23,7 @@ public class Graph {
         return edges.size();
     }
 
-    public Edge getEdge(int from, int to) {
+    public Edge getEdgeOrNullIfNotFound(int from, int to) {
         for (Edge e: edges)
             if ((e.from() == from && e.to() == to) || (e.from() == to && e.to() == from))
                 return e;
@@ -31,7 +31,7 @@ public class Graph {
     }
 
     public boolean noEdge(int from, int to) {
-        return getEdge(from, to) == null;
+        return getEdgeOrNullIfNotFound(from, to) == null;
     }
 
     public void addEdge(@NotNull Edge edge) {
@@ -39,8 +39,8 @@ public class Graph {
     }
 
     public int getWeight(int from, int to) {
-        Edge edge = getEdge(from, to);
-        return (getEdge(from, to) == null) ? -1 : edge.weight();
+        Edge edge = getEdgeOrNullIfNotFound(from, to);
+        return (getEdgeOrNullIfNotFound(from, to) == null) ? -1 : edge.weight();
     }
 
     public int[] getNeighbours(int vertex) {
@@ -62,7 +62,7 @@ public class Graph {
         return result;
     }
 
-    public int[] RandomPath(int start, int dest, int[] visitedVertices) {
+    public int[] randomPathNullIfNotAvailable(int start, int dest, int[] visitedVertices) {
         HashSet<Integer> visited = (visitedVertices == null)
                 ? new HashSet<>()
                 : new HashSet<>(IntStream.of(visitedVertices).boxed().collect(Collectors.toSet()));
@@ -83,11 +83,10 @@ public class Graph {
 
     public int[] modifyRandomPath(int @NotNull [] path) {
         int[] unchangedPathPart = null, changedPathPart = null;
-        if (path.length > 1) while (changedPathPart == null) {
+        if (path.length > 2) while (changedPathPart == null) {
             int changeIndex = rand.nextInt(1, path.length - 1);
-            unchangedPathPart = new int[changeIndex];
-            System.arraycopy(path , 0 , unchangedPathPart, 0, changeIndex);
-            changedPathPart = RandomPath(path[changeIndex], path[path.length - 1], unchangedPathPart);
+            System.arraycopy(path , 0 , unchangedPathPart = new int[changeIndex], 0, changeIndex);
+            changedPathPart = randomPathNullIfNotAvailable(path[changeIndex], path[path.length - 1], unchangedPathPart);
         }
         return concatTwoIntArrays(unchangedPathPart, changedPathPart);
     }
@@ -100,17 +99,16 @@ public class Graph {
 
     @Contract(pure = true)
     private int @NotNull [] concatTwoIntArrays(int[] first, int[] second) {
-        int fLen = first == null ? 0 : first.length, sLen = second == null ? 0 : second.length, k = 0;
+        int fLen = first == null ? 0 : first.length, sLen = second == null ? 0 : second.length, k = -1;
         int[] concat = new int[fLen + sLen];
-        for (int i = 0; i < fLen; ++i) concat[k++] = first[i];
-        for (int i = 0; i < sLen; ++i) concat[k++] = second[i];
+        for (int i = 0; i < fLen; ++i) concat[++k] = first[i];
+        for (int i = 0; i < sLen; ++i) concat[++k] = second[i];
         return concat;
     }
 
     private int[] except(int @NotNull [] first, int[] second) {
         ArrayList<Integer> res = new ArrayList<>();
-        for (int c : first)
-            if (Arrays.stream(second).noneMatch(n -> n == c)) res.add(c);
+        for (int c : first) if (Arrays.stream(second).noneMatch(n -> n == c)) res.add(c);
         return res.stream().mapToInt(Integer::valueOf).toArray();
     }
 

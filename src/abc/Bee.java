@@ -1,16 +1,15 @@
 package abc;
 
-public class Bee {
+public class Bee implements constants {
     public enum Status { ONLOOKER, EMPLOYED, SCOUT }
-    public static int maxUnluckyIteratesCount = 10;
     private int[] currentPath;
     private Status currentStatus;
     private int currentPathDistance, unluckyIterateCount;
 
     public Bee(Status currentStatus) {
         this.currentStatus = currentStatus;
-        this.currentPath = null;
-        this.currentPathDistance = 0;
+        currentPath = null;
+        currentPathDistance = 0;
         unluckyIterateCount = 0;
     }
 
@@ -41,7 +40,7 @@ public class Bee {
     }
 
     public boolean isUnluckyOverLimit() {
-        return unluckyIterateCount > maxUnluckyIteratesCount;
+        return unluckyIterateCount > MAX_AREAS;
     }
 
     public void stayIdle() {
