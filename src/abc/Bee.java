@@ -2,17 +2,16 @@ package abc;
 
 public class Bee {
     public enum Status { ONLOOKER, EMPLOYED, SCOUT }
-    public static int maxUnluckyItersCount = 10;
+    public static int maxUnluckyIteratesCount = 10;
     private int[] currentPath;
     private Status currentStatus;
-    private int currentPathDistance;
-    private int unluckyIterCount;
+    private int currentPathDistance, unluckyIterateCount;
 
-    public Bee(Status status) {
-        this.currentStatus = status;
+    public Bee(Status currentStatus) {
+        this.currentStatus = currentStatus;
         this.currentPath = null;
         this.currentPathDistance = 0;
-        unluckyIterCount = 0;
+        unluckyIterateCount = 0;
     }
 
     public Status getCurrentStatus() {
@@ -31,33 +30,21 @@ public class Bee {
         return currentPathDistance;
     }
 
-    public void setUnluckyIterCount(int unluckyIterCount) {
-        this.unluckyIterCount = unluckyIterCount;
+    public void setUnluckyIterateCount(int unluckyIterateCount) {
+        this.unluckyIterateCount = unluckyIterateCount;
     }
 
     public void changePath(int[] path, int pathDistance) {
-        currentPath = path.clone(); // *******************************************************************************
+        currentPath = path;
         currentPathDistance = pathDistance;
-        unluckyIterCount = 0;
+        unluckyIterateCount = 0;
     }
 
     public boolean isUnluckyOverLimit() {
-        return unluckyIterCount > maxUnluckyItersCount;
+        return unluckyIterateCount > maxUnluckyIteratesCount;
     }
 
-    // ожидает
     public void stayIdle() {
-        ++unluckyIterCount;
-    }
-
-    @Override public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append("Status = ").append(currentStatus).append("\n");
-        s.append(" Memory = ");
-        for (int i = 0; i < currentPath.length - 1; ++i)
-            s.append(currentPath[i]).append("-");
-        s.append(currentPath[currentPath.length - 1]).append("\n");
-        s.append(" Distance = ").append(currentPathDistance);
-        return s.toString();
+        ++unluckyIterateCount;
     }
 }

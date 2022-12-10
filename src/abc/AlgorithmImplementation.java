@@ -4,28 +4,19 @@ import java.util.*;
 
 class AlgorithmImplementation {
     private final Random rand = new Random();
-
-    EdgeList graph;
-    int pathStart, pathEnd;
-
-    int maxCycles; // за одну итерацию все агенты совершают по одному действию
-    int reportEvery;
-
-    public double PersuasionProbability; // вероятность бездействующей пчелы откликнуться на танец разведчика
-    public double MistakeProbability; // вероятность пчелы-работника принять ошибочное решение
-
-    int workerCount, scoutCount;
-
-    ArrayList<Bee> scouts, onlookers, employed;
-
-    HashMap<int[], Integer> scoutedPaths;    // решения, найденные разведчиками
-
-    private int[] bestPath;
+    // вероятность бездействующей пчелы откликнуться на танец разведчика
+    private final double PersuasionProbability, MistakeProbability;
+    // за одну итерацию все агенты совершают по одному действию
+    private final int workerCount, scoutCount, pathStart, pathEnd, maxCycles, reportEvery;
     private int bestDistance;
+    private int[] bestPath;
+    Graph graph;
+    ArrayList<Bee> scouts, onlookers, employed;
+    HashMap<int[], Integer> scoutedPaths; // решения, найденные разведчиками
 
     public AlgorithmImplementation(int workerCount, int scoutCount, int maxNumberVisits,
-                                   EdgeList graph, int pathStart, int pathEnd, int maxCycles, int reportEvery) {
-        Bee.maxUnluckyItersCount = maxNumberVisits;
+                                   Graph graph, int pathStart, int pathEnd, int maxCycles, int reportEvery) {
+        Bee.maxUnluckyIteratesCount = maxNumberVisits;
         this.maxCycles = maxCycles;
         this.reportEvery = reportEvery;
         this.graph = graph;
@@ -38,29 +29,8 @@ class AlgorithmImplementation {
         this.scoutCount = scoutCount;
     }
 
-    public int getBeesCount() {
-        return scouts.size() + onlookers.size() + employed.size();
-    }
-
-    @Override public String toString() {
-        StringBuilder s = new StringBuilder(onlookers.size() + " onlookers, ");
-        s.append(employed.size()).append(" employed, ");
-        s.append(scouts.size()).append(" scouts, ");
-        s.append(getBeesCount()).append(" total\n");
-        s.append("Best path found: ");
-        if (bestPath != null) {
-            for (int i = 0; i < this.bestPath.length - 1; ++i)
-                s.append(bestPath[i]).append("-");
-            s.append(this.bestPath[this.bestPath.length - 1]).append("\n");
-            s.append("Path distance: ");
-            s.append(bestDistance).append("\n");
-        }
-        else s.append("none");
-        return s.toString();
-    }
-
     // создаёт начальную популяцию: разведчики + ожидающие в улье рабочие
-    private void ProduceInitialPopulation() {
+    private void produceInitialPopulation() {
         employed = new ArrayList<>(workerCount);
         onlookers = new ArrayList<>(workerCount);
         for (int i = 0; i < workerCount; ++i)
@@ -71,16 +41,16 @@ class AlgorithmImplementation {
     }
 
     public void solve() {
-        ProduceInitialPopulation();
+        produceInitialPopulation();
         long start = System.currentTimeMillis();
-        for (int iteration = 0; iteration < maxCycles;) {
+        for (int i = 0; i < maxCycles;) {
             for (int k = 0; k < reportEvery; ++k) {
                 scoutPhase();
-                OnlookerPhase();
+                onlookerPhase();
                 employedPhase();
                 keepBestPath();
             }
-            System.out.printf("Iteration #%d\n%s\n", iteration += reportEvery, this);
+            System.out.printf("Iteration #%d\n%s\n", i += reportEvery, this);
         }
         System.out.printf("Estimated time to solve - %8d seconds\n", (System.currentTimeMillis() - start) / 1000);
         System.out.printf("Finded best path: %s\nIs valid? - %b.", Arrays.toString(bestPath), graph.isValidPath(bestPath));
@@ -115,12 +85,12 @@ class AlgorithmImplementation {
         // пчела-неудачник прекращает попытки улучшить путь
         if (employedBee.isUnluckyOverLimit()) {
             employedBee.setCurrentStatus(Bee.Status.ONLOOKER);
-            employedBee.setUnluckyIterCount(0);
+            employedBee.setUnluckyIterateCount(0);
             onlookers.add(employedBee);
         }
     }
 
-    private void OnlookerPhase() {
+    private void onlookerPhase() {
         HashMap<Double, int[]> rollingWheel = createScoutedPathsRollingWheel();
         for (Bee onlooker: onlookers)
             processOnlookerBee(onlooker, rollingWheel);
@@ -135,10 +105,10 @@ class AlgorithmImplementation {
             distanceSum += scoutedPaths.get(path);
 
         HashMap<Double, int[]> res = new HashMap<>();
-        double prevProb = 0.0;
+        double prevProb = 0f;
 
         for (int[] path : scoutedPaths.keySet()) {
-            double prob = 1.0 - scoutedPaths.get(path) / (double)distanceSum;
+            double prob = 1f - scoutedPaths.get(path) / (double)distanceSum;
             res.put(prevProb + prob, path);
             prevProb += prob;
         }
@@ -159,7 +129,7 @@ class AlgorithmImplementation {
         int solutionDistance = graph.measureDistance(randomSolution);
         bee.changePath(randomSolution, solutionDistance);
         // пчела танцует к улью о том, какой путь нашла
-        DoWaggleDance(bee);
+        doWaggleDance(bee);
     }
 
     private void processOnlookerBee(Bee bee, HashMap<Double, int[]> rollingWheel) {
@@ -185,7 +155,7 @@ class AlgorithmImplementation {
         return res;
     }
 
-    private void DoWaggleDance(Bee bee) {
+    private void doWaggleDance(Bee bee) {
         scoutedPaths.put(bee.getCurrentPath(), bee.getCurrentPathDistance());
     }
 
@@ -195,5 +165,22 @@ class AlgorithmImplementation {
         for (int i = 0; i < fLen; ++i) concat[k++] = first[i];
         for (int i = 0; i < sLen; ++i) concat[k++] = second[i];
         return concat;
+    }
+
+    @Override public String toString() {
+        StringBuilder s = new StringBuilder(onlookers.size() + " onlookers, ");
+        s.append(employed.size()).append(" employed, ");
+        s.append(scouts.size()).append(" scouts, ");
+        s.append(scouts.size() + onlookers.size() + employed.size()).append(" total\n");
+        s.append("Best path found: ");
+        if (bestPath != null) {
+            for (int i = 0; i < this.bestPath.length - 1; ++i)
+                s.append(bestPath[i]).append("-");
+            s.append(this.bestPath[this.bestPath.length - 1]).append("\n");
+            s.append("Path distance: ");
+            s.append(bestDistance).append("\n");
+        }
+        else s.append("none");
+        return s.toString();
     }
 }

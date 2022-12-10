@@ -4,14 +4,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class EdgeList {
+public class Graph {
     public record Edge(int from, int to, int weight) {}
 
     private final Random rand = new Random();
     private final int verticesCount;
     private final ArrayList<Edge> edges;
 
-    public EdgeList(int verticesCount, int numEdges) {
+    public Graph(int verticesCount, int numEdges) {
         this.edges = new ArrayList<>(numEdges);
         this.verticesCount = verticesCount;
     }
@@ -59,14 +59,6 @@ public class EdgeList {
         return result;
     }
 
-    @Override public String toString() {
-        StringBuilder s = new StringBuilder(verticesCount + " vertices, "
-                + getEdgeCount() + " edges:\n");
-        for (Edge e: edges)
-            s.append(e.from()).append("-").append(e.to()).append(", weighted ").append(e.weight()).append("\n");
-    return s.toString();
-}
-
     public int[] RandomPath(int start, int dest, int[] visitedVertices) {
         HashSet<Integer> visited = (visitedVertices == null)
                 ? new HashSet<>()
@@ -89,7 +81,7 @@ public class EdgeList {
 
     public int[] modifyRandomPath(int[] path) {
         int[] unchangedPathPart = null, changedPathPart = null;
-        while (changedPathPart == null) {
+        if (path.length > 1) while (changedPathPart == null) {
             int changeIndex = rand.nextInt(1, path.length - 1);
             unchangedPathPart = new int[changeIndex];
             System.arraycopy(path , 0 , unchangedPathPart, 0, changeIndex);
@@ -115,7 +107,17 @@ public class EdgeList {
     private int[] except(int[] first, int[] second) {
         ArrayList<Integer> res = new ArrayList<>();
         for (int c : first)
-            if (!List.of(second).contains(c)) res.add(c);
+            if (Arrays.stream(second).noneMatch(n -> n == c)) res.add(c);
         return res.stream().mapToInt(Integer::valueOf).toArray();
+    }
+
+    @Override public String toString() {
+        StringBuilder sb = new StringBuilder(verticesCount + " vertices, " + getEdgeCount() + " edges:\n");
+        int k = 0;
+        for (Edge e: edges) {
+            if (++k % 12 == 0) sb.append('\n');
+            sb.append(e.from()).append('-').append(e.to()).append(":w").append(e.weight()).append(", ");
+        }
+        return sb.replace(sb.length() - 2, sb.length(), ";").toString();
     }
 }
