@@ -1,5 +1,7 @@
 package abc;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Random;
 
 public class UsualBeeColonyAlgorithmImplementation implements constants {
@@ -11,14 +13,14 @@ public class UsualBeeColonyAlgorithmImplementation implements constants {
         ai.solve();
     }
 
-    private static Graph loadGraph() {
+    private static @NotNull Graph loadGraph() {
         Random rand = new Random();
         Graph result = new Graph(MAX_VERTEX, MAX_VERTEX * 15 << 1);
         for (int i = 0; i < MAX_VERTEX * 15; ++i) {
             int from = rand.nextInt(0, MAX_VERTEX);
             int to; do to = rand.nextInt(0, MAX_VERTEX); while (to == from);
             int weight = rand.nextInt(MIN_W, MAX_W);
-            // реализация симметричной сети
+            // реалізація симетричної мережі
             result.addEdge(new Graph.Edge(from, to, weight));
             result.addEdge(new Graph.Edge(to, from, weight));
         }

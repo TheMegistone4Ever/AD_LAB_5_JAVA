@@ -1,13 +1,16 @@
 package abc;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Graph {
     public record Edge(int from, int to, int weight) {}
-
     private final Random rand = new Random();
+
     private final int verticesCount;
     private final ArrayList<Edge> edges;
 
@@ -31,7 +34,7 @@ public class Graph {
         return getEdge(from, to) == null;
     }
 
-    public void addEdge(Edge edge) {
+    public void addEdge(@NotNull Edge edge) {
         if (noEdge(edge.from(), edge.to())) edges.add(edge);
     }
 
@@ -49,7 +52,7 @@ public class Graph {
         return neighbours.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    public int measureDistance(int[] path) {
+    public int measureDistance(int @NotNull [] path) {
         int result = 0;
         for (int i = 0; i < path.length - 1; ++i) {
             int weight = getWeight(path[i], path[i + 1]);
@@ -68,18 +71,17 @@ public class Graph {
         int currentVertex = path.get(path.size() - 1);
         while (currentVertex != dest) {
             int[] neighs = except(getNeighbours(currentVertex), visited.stream().mapToInt(Integer::intValue).toArray());
-            if (neighs.length == 0) {
+            if (neighs.length == 0)
                 if (path.size() == 1) return null;
-                path.remove(path.size() - 1);
-            }
-            else path.add(neighs[rand.nextInt(neighs.length)]); // add next vertex
+                else path.remove(path.size() - 1);
+            else path.add(neighs[rand.nextInt(neighs.length)]);
             currentVertex = path.get(path.size() - 1);
             visited.add(currentVertex);
         }
         return path.stream().mapToInt(Integer::valueOf).toArray();
     }
 
-    public int[] modifyRandomPath(int[] path) {
+    public int[] modifyRandomPath(int @NotNull [] path) {
         int[] unchangedPathPart = null, changedPathPart = null;
         if (path.length > 1) while (changedPathPart == null) {
             int changeIndex = rand.nextInt(1, path.length - 1);
@@ -90,13 +92,14 @@ public class Graph {
         return concatTwoIntArrays(unchangedPathPart, changedPathPart);
     }
 
-    public boolean isValidPath(int[] path) {
+    public boolean isValidPath(int @NotNull [] path) {
         for (int i = 0; i < path.length - 1; ++i)
             if (noEdge(path[i], path[i + 1])) return false;
         return true;
     }
 
-    private int[] concatTwoIntArrays(int[] first, int[] second) {
+    @Contract(pure = true)
+    private int @NotNull [] concatTwoIntArrays(int[] first, int[] second) {
         int fLen = first == null ? 0 : first.length, sLen = second == null ? 0 : second.length, k = 0;
         int[] concat = new int[fLen + sLen];
         for (int i = 0; i < fLen; ++i) concat[k++] = first[i];
@@ -104,7 +107,7 @@ public class Graph {
         return concat;
     }
 
-    private int[] except(int[] first, int[] second) {
+    private int[] except(int @NotNull [] first, int[] second) {
         ArrayList<Integer> res = new ArrayList<>();
         for (int c : first)
             if (Arrays.stream(second).noneMatch(n -> n == c)) res.add(c);

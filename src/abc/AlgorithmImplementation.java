@@ -1,18 +1,21 @@
 package abc;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 class AlgorithmImplementation {
     private final Random rand = new Random();
-    // вероятность бездействующей пчелы откликнуться на танец разведчика
+    // ймовірність бездіяльної бджоли відгукнутися на танець розвідника
     private final double PersuasionProbability, MistakeProbability;
-    // за одну итерацию все агенты совершают по одному действию
+    // за одну ітерацію всі агенти здійснюють по одній дії
     private final int workerCount, scoutCount, pathStart, pathEnd, maxCycles, reportEvery;
     private int bestDistance;
     private int[] bestPath;
     Graph graph;
     ArrayList<Bee> scouts, onlookers, employed;
-    HashMap<int[], Integer> scoutedPaths; // решения, найденные разведчиками
+    HashMap<int[], Integer> scoutedPaths; // рішення, знайдені розвідниками
 
     public AlgorithmImplementation(int workerCount, int scoutCount, int maxNumberVisits,
                                    Graph graph, int pathStart, int pathEnd, int maxCycles, int reportEvery) {
@@ -29,13 +32,13 @@ class AlgorithmImplementation {
         this.scoutCount = scoutCount;
     }
 
-    // создаёт начальную популяцию: разведчики + ожидающие в улье рабочие
+    // створює початкову популяцію: розвідники + робітники, які очікують у вулику
     private void produceInitialPopulation() {
         employed = new ArrayList<>(workerCount);
         onlookers = new ArrayList<>(workerCount);
+        scouts = new ArrayList<>(scoutCount);
         for (int i = 0; i < workerCount; ++i)
             onlookers.add(new Bee(Bee.Status.ONLOOKER));
-        scouts = new ArrayList<>(scoutCount);
         for (int i = 0; i < scoutCount; ++i)
             scouts.add(new Bee(Bee.Status.SCOUT));
     }
@@ -52,18 +55,18 @@ class AlgorithmImplementation {
             }
             System.out.printf("Iteration #%d\n%s\n", i += reportEvery, this);
         }
-        System.out.printf("Estimated time to solve - %8d seconds\n", (System.currentTimeMillis() - start) / 1000);
-        System.out.printf("Finded best path: %s\nIs valid? - %b.", Arrays.toString(bestPath), graph.isValidPath(bestPath));
+        System.out.printf("Solution time - %8d seconds\n", (System.currentTimeMillis() - start) / 1000);
+        System.out.printf("Best path: %s\n" +
+                "Is valid? - %b.", Arrays.toString(bestPath), graph.isValidPath(bestPath));
     }
 
-    // если рабочим удалось найти лучшее решение, запоминает его
+    // якщо робітникам вдалося знайти краще рішення, запам'ятовуємо його
     private void keepBestPath() {
-        for (Bee employ: employed) {
+        for (Bee employ: employed)
             if (bestPath == null || employ.getCurrentPathDistance() < bestDistance) {
                 bestDistance = employ.getCurrentPathDistance();
                 bestPath = employ.getCurrentPath();
             }
-        }
     }
 
     private void employedPhase() {
@@ -71,18 +74,18 @@ class AlgorithmImplementation {
         employed.removeIf(employ -> employ.getCurrentStatus() != Bee.Status.EMPLOYED);
     }
 
-    private void processEmployedBee(Bee employedBee) {
+    private void processEmployedBee(@NotNull Bee employedBee) {
         int[] neighborSolution = graph.modifyRandomPath(employedBee.getCurrentPath());
         int neighborDistance = graph.measureDistance(neighborSolution);
 
         boolean isMistaken = rand.nextDouble() < MistakeProbability;
         boolean foundNewSolution = neighborDistance < employedBee.getCurrentPathDistance();
 
-        if (foundNewSolution ^ isMistaken) // XOR
+        if (foundNewSolution ^ isMistaken)
             employedBee.changePath(neighborSolution, neighborDistance);
         else employedBee.stayIdle();
 
-        // пчела-неудачник прекращает попытки улучшить путь
+        // бджола-невдаха припиняє спроби поліпшити шлях
         if (employedBee.isUnluckyOverLimit()) {
             employedBee.setCurrentStatus(Bee.Status.ONLOOKER);
             employedBee.setUnluckyIterateCount(0);
@@ -97,9 +100,9 @@ class AlgorithmImplementation {
         onlookers.removeIf(onlooker -> onlooker.getCurrentStatus() != Bee.Status.ONLOOKER);
     }
 
-    // строит рулетку решений разведчиков = проецирует каждое решение в отрезок внутри [0..1]
-    // длины отрезков пропорциональны добротности значениям целевой функции
-    private HashMap<Double, int[]> createScoutedPathsRollingWheel() {
+    // будує рулетку рішень розвідників = проєктує кожне рішення в відрізок усередині [0..1]
+    // довжини відрізків пропорційні добротності значень цільової функції
+    private @NotNull HashMap<Double, int[]> createScoutedPathsRollingWheel() {
         int distanceSum = 0;
         for (int[] path : scoutedPaths.keySet())
             distanceSum += scoutedPaths.get(path);
@@ -118,31 +121,27 @@ class AlgorithmImplementation {
 
     private void scoutPhase() {
         scoutedPaths.clear();
-        for (Bee scout: scouts)
-            processScoutBee(scout);
+        for (Bee scout: scouts) processScoutBee(scout);
     }
 
     private void processScoutBee(Bee bee) {
-        // если в улье нет свободных рабочих, нет смысла искать решение
-        if (onlookers.size() == 0) return;
+        if (onlookers.size() == 0) return; // якщо у вулику немає вільних робітників, немає сенсу шукати рішення
         int[] randomSolution = graph.RandomPath(pathStart, pathEnd, null);
         int solutionDistance = graph.measureDistance(randomSolution);
         bee.changePath(randomSolution, solutionDistance);
-        // пчела танцует к улью о том, какой путь нашла
-        doWaggleDance(bee);
+        scoutedPaths.put(bee.getCurrentPath(), bee.getCurrentPathDistance()); // бджола танцює до вулика про те, який шлях знайшла
     }
 
     private void processOnlookerBee(Bee bee, HashMap<Double, int[]> rollingWheel) {
-        boolean isPersuaded = rand.nextDouble() < PersuasionProbability;
-        if (isPersuaded) {
+        if (rand.nextDouble() < PersuasionProbability) {
             int[] path = getPathFromWheel(rand.nextDouble(), rollingWheel);
             bee.changePath(path, scoutedPaths.get(path));
             bee.setCurrentStatus(Bee.Status.EMPLOYED);
             employed.add(bee);
         }
     }
-    // вычисляет попадание точки в отрезок на рулетке и получает оттуда соответствующее решение
-    private int[] getPathFromWheel(double randomDouble, HashMap<Double, int[]> rollingWheel) {
+    // обчислює потрапляння точки в відрізок на рулетці й отримує звідти відповідне рішення
+    private int[] getPathFromWheel(double randomDouble, @NotNull HashMap<Double, int[]> rollingWheel) {
         int[] res = null;
         double[] wheelRange = concatTwoDoubleArrays(new Double[]{.0}, rollingWheel.keySet().toArray(new Double[0]));
         Arrays.sort(wheelRange);
@@ -155,11 +154,8 @@ class AlgorithmImplementation {
         return res;
     }
 
-    private void doWaggleDance(Bee bee) {
-        scoutedPaths.put(bee.getCurrentPath(), bee.getCurrentPathDistance());
-    }
-
-    private double[] concatTwoDoubleArrays(Double[] first, Double[] second) {
+    @Contract(pure = true)
+    private double @NotNull [] concatTwoDoubleArrays(Double[] first, Double[] second) {
         int fLen = first == null ? 0 : first.length, sLen = second == null ? 0 : second.length, k = 0;
         double[] concat = new double[fLen + sLen];
         for (int i = 0; i < fLen; ++i) concat[k++] = first[i];
@@ -174,9 +170,9 @@ class AlgorithmImplementation {
         s.append(scouts.size() + onlookers.size() + employed.size()).append(" total\n");
         s.append("Best path found: ");
         if (bestPath != null) {
-            for (int i = 0; i < this.bestPath.length - 1; ++i)
+            for (int i = 0; i < bestPath.length - 1; ++i)
                 s.append(bestPath[i]).append("-");
-            s.append(this.bestPath[this.bestPath.length - 1]).append("\n");
+            s.append(bestPath[bestPath.length - 1]).append("\n");
             s.append("Path distance: ");
             s.append(bestDistance).append("\n");
         }
