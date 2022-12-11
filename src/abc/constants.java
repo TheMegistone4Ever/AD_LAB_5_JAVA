@@ -1,10 +1,11 @@
 package abc;
 
+// найкращі параметри
 public interface constants {
     int     MAX_VERTEX      = 300,
             MIN_W           = 5,
             MAX_W           = 150,
-            TOTAL_BEES      = 50,
+            TOTAL_BEES      = 60,
             SCOUT_BEES      = 15,
             ITERATIONS      = 1000,
             FREQ_TO_REPORT  = 20,
