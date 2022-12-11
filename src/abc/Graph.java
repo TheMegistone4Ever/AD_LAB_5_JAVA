@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 
 public class Graph {
     public record Edge(int from, int to, int weight) {}
-    private final Random rand = new Random();
+    private final Random rand = new Random(2022);
 
     private final int verticesCount;
     private final ArrayList<Edge> edges;

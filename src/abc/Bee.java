@@ -40,7 +40,7 @@ public class Bee implements constants {
     }
 
     public boolean isUnluckyOverLimit() {
-        return unluckyIterateCount > MAX_AREAS;
+        return unluckyIterateCount > UNL_LIM;
     }
 
     public void stayIdle() {

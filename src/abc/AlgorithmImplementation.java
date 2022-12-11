@@ -17,8 +17,8 @@ class AlgorithmImplementation implements constants {
     ArrayList<Bee> scouts, onlookers, employed;
     HashMap<int[], Integer> scoutedPaths; // рішення, знайдені розвідниками
 
-    public AlgorithmImplementation(int workerCount, int scoutCount,
-                                   Graph graph, int pathStart, int pathEnd, int maxCycles, int reportEvery) {
+    public AlgorithmImplementation(int workerCount, int scoutCount, Graph graph, int pathStart, int pathEnd,
+                                   int maxCycles, int reportEvery) {
         this.maxCycles = maxCycles;
         this.reportEvery = reportEvery;
         this.graph = graph;
@@ -33,8 +33,8 @@ class AlgorithmImplementation implements constants {
 
     // створює початкову популяцію: розвідники та фуражири, які очікують у вулику
     private void produceInitialPopulation() {
-        employed = new ArrayList<>(workerCount);
-        onlookers = new ArrayList<>(workerCount);
+        employed = new ArrayList<>();
+        onlookers = new ArrayList<>();
         scouts = new ArrayList<>(scoutCount);
         for (int i = 0; i < workerCount; ++i)
             onlookers.add(new Bee(Bee.Status.ONLOOKER));
@@ -45,17 +45,14 @@ class AlgorithmImplementation implements constants {
     public void solve() {
         produceInitialPopulation();
         long start = System.currentTimeMillis();
-        while (scoutedPaths.size() <= MAX_AREAS) {
-            for (int i = 0; i < maxCycles; ) {
-                for (int k = 0; k < reportEvery; ++k) {
-                    scoutPhase();
-                    onlookerPhase();
-                    employedPhase();
-                    keepBestPath();
-                    System.out.println(scoutedPaths.size());
-                }
-                System.out.printf("Iteration #%d\n%s\n", i += reportEvery, this);
+        for (int i = 0; i < maxCycles;) {
+            for (int k = 0; k < reportEvery; ++k) {
+                scoutPhase();
+                onlookerPhase();
+                employedPhase();
+                keepBestPath();
             }
+            System.out.printf("Iteration #%d\n%s\n", i += reportEvery, this);
         }
         System.out.printf("Solution time - %8d seconds\n", (System.currentTimeMillis() - start) / 1000);
         System.out.printf("Best path: %s\n" +
