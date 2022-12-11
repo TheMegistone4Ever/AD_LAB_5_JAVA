@@ -1,6 +1,6 @@
 package abc;
 
-// найкращі параметри
+// найкращі параметри для розв'язку
 public interface constants {
     int     MAX_VERTEX      = 300,
             MIN_W           = 5,
